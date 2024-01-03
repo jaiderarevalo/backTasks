@@ -51,14 +51,6 @@ export class UserService {
   async checkPassword(users: User, password: string): Promise<boolean> {
     try {
       const res = compareSync(password, users.password);
-      if (!res) {
-        throw new HttpException(
-          'email o password invalido',
-          HttpStatus.BAD_REQUEST,
-        );
-      }
-      console.log('invalidos', res);
-
       return res;
     } catch (error) {
       throw new HttpException(
@@ -68,28 +60,27 @@ export class UserService {
     }
   }
   async checkPasswordUpdate(users: User, password?: string): Promise<boolean> {
-    try {
-      console.log('password comparacion', password, users.password);
-      if (!password) {
-        return true;
-      }
-      const res = compareSync(password, users.password);
-      if (!res) {
-        throw new HttpException('password invalido', HttpStatus.BAD_REQUEST);
-      }
-      console.log('invalidos', res);
-      console.log('es la respuesta', res);
-
-      return res;
-    } catch (error) {
-      throw new HttpException(`${error}`, HttpStatus.INTERNAL_SERVER_ERROR);
+    console.log('password comparacion', password, users.password);
+    if (!password) {
+      return true;
     }
+    const res = compareSync(password, users.password);
+
+    console.log('invalidos', res);
+    console.log('es la respuesta', res);
+
+    return res;
   }
+
   async updateUserData(updateUsersDTO: updateUsersDTO): Promise<User | null> {
     try {
       const { email, name, password, newPassword } = updateUsersDTO;
       const user = await this.userRepository.findOneBy({ email });
       console.log('el user', user);
+
+      if (name === '' || password === '' || newPassword === '') {
+        throw new HttpException('Campos Vacios', HttpStatus.BAD_REQUEST);
+      }
 
       if (!user) {
         throw new HttpException(
@@ -98,11 +89,10 @@ export class UserService {
         );
       }
 
-      const isPasswordValid = await this.checkPasswordUpdate(user, password);
-      if (!isPasswordValid) {
-        throw new HttpException('contraseña no valida', HttpStatus.BAD_REQUEST);
+      const res = await this.checkPasswordUpdate(user, password);
+      if (!res) {
+        throw new HttpException('Contraseña inválida', HttpStatus.BAD_REQUEST);
       }
-
       if (name) {
         user.name = name;
       }
@@ -116,10 +106,7 @@ export class UserService {
       return updatedUser;
     } catch (error) {
       console.error(error);
-      throw new HttpException(
-        'Error interno del servidor',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw error;
     }
   }
 
