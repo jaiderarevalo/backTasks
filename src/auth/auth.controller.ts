@@ -113,6 +113,12 @@ export class AuthController {
         HttpStatus.UNAUTHORIZED,
       );
     }
+    if (password && newPassword === '') {
+      throw new HttpException(
+        'llenar nueva contraseña',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     const userId = req.user.id;
     console.log('id de usuario', userId);
     const updateDtos: updateUsersDTO = {
